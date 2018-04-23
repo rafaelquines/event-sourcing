@@ -46,46 +46,29 @@ function updateRecords(serverRecords, storageRecords, schema) {
     storageRecords = removeDeleted(serverRecords, storageRecords, schema);
     serverRecords = serverRecords.filter(serverItem => !serverItem[schema.deletedField]);
     storageRecords = updateExisting(serverRecords, storageRecords, schema);
-    
     storageRecords = insertNew(serverRecords, storageRecords, schema);
-    // return [...insertNew(), updateExisting()]
-    // return serverRecords.filter(server => {
-    //     if (!server[schema.deletedField]) {
-    //         return server;
-    //     }
-    // });
-
     return storageRecords;
+}
 
-    // marca os items excluídos como #deleted em records.
-    // Adiciona os itens velhos em oldItems
-    // data são os dados vindos do servidor e records são os dados que vieram do storage
-    // serverRecords.forEach(serverRecord => {
-    //   storageRecords = storageRecords.map(storageRecord => {
-    //     if (storageRecord[schema.idField] === serverRecord[schema.idField]) {
-    //       oldItems.push(serverRecord);
-    //       if (serverRecord[schema.deletedField]) {
-    //         return '#deleted';
-    //       } else {
-    //         return serverRecord;
-    //       }
-    //     } else {
-    //       return storageRecord;
-    //     }
-    //   });
-    // });
-
-    // // retira de records os items que estão marcados como #deleted
-    // storageRecords = storageRecords.filter(r => r !== '#deleted');
-
-    // // verifica se é um item novo e adiciona em newRecords
-    // const newRecords = serverRecords.filter(element => {
-    //   return oldItems.indexOf(element) < 0 && !element[schema.deletedField];
-    // });
-
-    // // concatena records (que não tem mais itens excluídos) com newRecords
-    // return storageRecords.concat(newRecords);
+function updateRecords2(serverRecords, storageRecords, schema) {
+    const newStorageRecords = serverRecords.reduce((acc, current) => {
+        // remove
+        if (current[schema.deletedField]) {
+            storageRecords = storageRecords.filter(storageItem => storageItem[schema.idField] !== current[schema.idField]);
+        } else {
+            const storageItem = storageRecords.find(s => s[schema.idField] === current[schema.idField]);
+            // update
+            if (storageItem !== undefined) {
+                storageRecords[storageRecords.indexOf(storageItem)] = current;
+            } else {
+                // add
+                acc.push(current);
+            }
+        }
+        return acc;
+    }, []);
+    return [...storageRecords, ...newStorageRecords];
 }
 
 // tslint:disable-next-line:no-console
-console.log(updateRecords(serverData, storageData, schemaConfig));
+console.log(updateRecords2(serverData, storageData, schemaConfig));
