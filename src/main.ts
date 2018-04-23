@@ -51,18 +51,18 @@ function updateRecords(serverRecords, storageRecords, schema) {
 }
 
 function updateRecords2(serverRecords, storageRecords, schema) {
-    const newStorageRecords = serverRecords.reduce((acc, current) => {
+    const newStorageRecords = serverRecords.reduce((acc, serverItem) => {
         // remove
-        if (current[schema.deletedField]) {
-            storageRecords = storageRecords.filter(storageItem => storageItem[schema.idField] !== current[schema.idField]);
+        if (serverItem[schema.deletedField]) {
+            storageRecords = storageRecords.filter(storageItem => storageItem[schema.idField] !== serverItem[schema.idField]);
         } else {
-            const storageItem = storageRecords.find(s => s[schema.idField] === current[schema.idField]);
+            const storageItem = storageRecords.find(s => s[schema.idField] === serverItem[schema.idField]);
             // update
             if (storageItem !== undefined) {
-                storageRecords[storageRecords.indexOf(storageItem)] = current;
+                storageRecords[storageRecords.indexOf(storageItem)] = serverItem;
             } else {
                 // add
-                acc.push(current);
+                acc.push(serverItem);
             }
         }
         return acc;
