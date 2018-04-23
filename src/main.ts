@@ -20,7 +20,9 @@ let schemaConfig = {
 };
 
 function insertNew(serverRecords: Array<any>, storageRecords: Array<any>, schema): Array<any> {
-    return storageRecords;
+    const storageIds = storageRecords.map(storageItem => storageItem[schema.idField]);
+    const newStorageRecords = serverRecords.filter(serverItem => !storageIds.includes(serverItem[schema.idField]));
+    return [...storageRecords, ...newStorageRecords];
 }
 
 function updateExisting(serverRecords: Array<any>, storageRecords: Array<any>, schema): Array<any> {
@@ -31,7 +33,7 @@ function updateExisting(serverRecords: Array<any>, storageRecords: Array<any>, s
 }
 
 function removeDeleted(serverRecords: Array<any>, storageRecords: Array<any>, schema): Array<any> {
-    const excludedServerItems: Array<any> = serverRecords.reduce((excluded, serverItem) => {
+    const excludedServerItems = serverRecords.reduce((excluded, serverItem) => {
       if (serverItem[schema.deletedField]) {
         excluded.push(serverItem[schema.idField]);
       }
@@ -41,11 +43,11 @@ function removeDeleted(serverRecords: Array<any>, storageRecords: Array<any>, sc
  }
 
 function updateRecords(serverRecords, storageRecords, schema) {
-    // const oldItems = [];
-    // storageRecords = insertNew(serverRecords, storageRecords, schema);
-    // storageRecords = updateExisting(serverRecords, storageRecords, schema);
     storageRecords = removeDeleted(serverRecords, storageRecords, schema);
-
+    serverRecords = serverRecords.filter(serverItem => !serverItem[schema.deletedField]);
+    storageRecords = updateExisting(serverRecords, storageRecords, schema);
+    
+    storageRecords = insertNew(serverRecords, storageRecords, schema);
     // return [...insertNew(), updateExisting()]
     // return serverRecords.filter(server => {
     //     if (!server[schema.deletedField]) {
