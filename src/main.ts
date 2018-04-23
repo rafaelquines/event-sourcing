@@ -1,6 +1,6 @@
 let serverData = [
     { id: 1, value: 'Value 1', delete: false },
-    { id: 2, value: 'Value 2', delete: false },
+    { id: 2, value: 'Value 2', delete: true },
     { id: 3, value: 'Value 3', delete: false },
     { id: 4, value: 'Value 4', delete: true }, // deleted
     { id: 5, value: 'Value 5', delete: false }, // só no server
@@ -24,25 +24,26 @@ function insertNew(serverRecords: Array<any>, storageRecords: Array<any>, schema
 }
 
 function updateExisting(serverRecords: Array<any>, storageRecords: Array<any>, schema): Array<any> {
-    storageRecords.map((storageItem) => {
-        const serverItem = serverRecords.find((s) => s[schema.idField] === storageItem[schema.idField]);
-        return serverItem === undefined ? storageItem : serverItem;
+    return storageRecords.map((storageItem) => {
+        const findServerItem = serverRecords.find((serverItem) => serverItem[schema.idField] === storageItem[schema.idField]);
+        return findServerItem === undefined ? storageItem : findServerItem;
     });
-    return storageRecords;
 }
 
 function removeDeleted(serverRecords: Array<any>, storageRecords: Array<any>, schema): Array<any> {
-    const excludeItems = serverRecords.filter(serverItem => serverItem[schema.deletedField]);
-    storageRecords = storageRecords.filter(storageItem => {
-        // storageItem[schema.idField]
-    });
-    return storageRecords;
-}
+    const excludedServerItems: Array<any> = serverRecords.reduce((excluded, serverItem) => {
+      if (serverItem[schema.deletedField]) {
+        excluded.push(serverItem[schema.idField]);
+      }
+      return excluded;
+    }, []);
+    return storageRecords.filter(storageItem => !excludedServerItems.includes(storageItem[schema.idField]));
+ }
 
 function updateRecords(serverRecords, storageRecords, schema) {
     // const oldItems = [];
-    storageRecords = insertNew(serverRecords, storageRecords, schema);
-    storageRecords = updateExisting(serverRecords, storageRecords, schema);
+    // storageRecords = insertNew(serverRecords, storageRecords, schema);
+    // storageRecords = updateExisting(serverRecords, storageRecords, schema);
     storageRecords = removeDeleted(serverRecords, storageRecords, schema);
 
     // return [...insertNew(), updateExisting()]
